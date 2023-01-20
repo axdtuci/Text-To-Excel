@@ -1,0 +1,91 @@
+Sub Step1MergeExcelFiles()
+  Dim fnameList, fnameCurFile As Variant
+  Dim countFiles, countSheets As Integer
+  Dim wksCurSheet As Worksheet
+  Dim wbkCurBook, wbkSrcBook As Workbook
+
+  fnameList = Application.GetOpenFilename(FileFilter:="Microsoft Excel Workbooks (*.xls;*.xlsx;*.xlsm),*.xls;*.xlsx;*.xlsm", Title:="Choose Excel files to merge", MultiSelect:=True)
+
+  If (vbBoolean <> VarType(fnameList)) Then
+
+    If (UBound(fnameList) > 0) Then
+      countFiles = 0
+      countSheets = 0
+
+      Application.ScreenUpdating = False
+      Application.Calculation = xlCalculationManual
+
+      Set wbkCurBook = ActiveWorkbook
+
+      For Each fnameCurFile In fnameList
+          countFiles = countFiles + 1
+
+          Set wbkSrcBook = Workbooks.Open(Filename:=fnameCurFile)
+
+          For Each wksCurSheet In wbkSrcBook.Sheets
+              countSheets = countSheets + 1
+              wksCurSheet.Copy after:=wbkCurBook.Sheets(wbkCurBook.Sheets.Count)
+          Next
+
+          wbkSrcBook.Close SaveChanges:=False
+
+      Next
+
+      Application.ScreenUpdating = True
+      Application.Calculation = xlCalculationAutomatic
+
+      MsgBox "Processed " & countFiles & " files" & vbCrLf & "Merged " & countSheets & " worksheets", Title:="Merge Excel files"
+    End If
+
+  Else
+      MsgBox "No files selected", Title:="Merge Excel files"
+  End If
+End Sub
+
+Sub Step2Txt2ColumnAllworksheets()
+    Dim xSh As Worksheet
+    Application.ScreenUpdating = False
+    For Each xSh In Worksheets
+        xSh.Select
+        Call DoNotClickRunCode
+    Next
+    Application.ScreenUpdating = True
+End Sub
+Sub DoNotClickRunCode()
+    Columns("A:A").Select
+    Selection.TextToColumns Destination:=Range("A1"), DataType:=xlDelimited, _
+        TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=True, Tab:=True, _
+        Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+        :=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1), Array(5, 1), Array(6, 1), _
+        Array(7, 1), Array(8, 1), Array(9, 1)), TrailingMinusNumbers:=True
+End Sub
+
+Sub Step3SortAllWorksheets()
+    Dim WS      As Worksheet
+    For Each WS In Worksheets
+' SortAllWorksheets Macro
+' Sorts all worksheetsbased on Color(ascending), Slice#(ascenbding), and Annotation(A-z)
+
+    Columns("A:I").Select
+    WS.Sort.SortFields.Clear
+    WS.Sort.SortFields.Add2 Key:= _
+        Range("A1:A112"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption _
+        :=xlSortNormal
+    WS.Sort.SortFields.Add2 Key:= _
+        Range("C1:C112"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption _
+        :=xlSortNormal
+    WS.Sort.SortFields.Add2 Key:= _
+        Range("B1:B112"), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption _
+        :=xlSortNormal
+    With WS.Sort
+        .SetRange Range("A1:I112")
+        .Header = xlGuess
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    Next WS
+End Sub
+
+
